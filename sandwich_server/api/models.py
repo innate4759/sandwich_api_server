@@ -72,10 +72,10 @@ class Sauce(models.Model):
 class Sandwich(models.Model):
     id = models.AutoField(primary_key=True)
     is_deleted = models.BooleanField(default=False)
-    bread = models.ForeignKey(Bread, on_delete=models.SET_NULL, null=True)
-    topping = models.ForeignKey(Topping, on_delete=models.SET_NULL, null=True)
-    cheese = models.ForeignKey(Cheese, on_delete=models.SET_NULL, null=True)
-    sauce = models.ForeignKey(Sauce, on_delete=models.SET_NULL, null=True)
+    bread = models.ManyToManyField(Bread)
+    topping = models.ManyToManyField(Topping)
+    cheese = models.ManyToManyField(Cheese)
+    sauce = models.ManyToManyField(Sauce)
     created_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -83,4 +83,4 @@ class Sandwich(models.Model):
         app_label = "api"
 
     def __str__(self):
-        return self.id
+        return str(self.id)
