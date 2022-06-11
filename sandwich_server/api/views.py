@@ -21,6 +21,9 @@ class SandwichViewSet(viewsets.ModelViewSet):
     serializer_class = SandwichSerializer
     pagination_class = SandwichPagination
 
+    def __init__(self):
+        self.current_ingredient_name = ''
+
     @swagger_auto_schema(responses={200: openapi.Response(description='SandwichVO', schema=SandwichVOSerializer)})
     def get_sandwiches(self, request):
         sandwiches = Sandwich.objects.filter(is_deleted=False)
@@ -28,7 +31,6 @@ class SandwichViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(responses={200: openapi.Response(description='SandwichVO', schema=SandwichVOSerializer)})
     def create_sandwich(self, request):
-        current_ingredient_name = ''
         bread_params = request.data.get('bread')
         topping_params = request.data.get('topping')
         cheese_params = request.data.get('cheese')
@@ -85,7 +87,7 @@ class SandwichViewSet(viewsets.ModelViewSet):
 
                 sandwich.save()
         except ValidationError:
-            return Response({'detail': f'{current_ingredient_name} cannot be selected because stock is 0'},
+            return Response({'detail': f'{self.current_ingredient_name} cannot be selected because stock is 0'},
                             status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response(SandwichSerializer(sandwich).data)
@@ -111,6 +113,7 @@ class SandwichViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def check_ingredient_stock(self, ingredient: Union[Bread, Topping, Cheese, Sauce]):
+        self.current_ingredient_name = ingredient.name
         if ingredient.qty < 1:
             raise ValidationError('')
 
