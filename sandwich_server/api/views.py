@@ -1,3 +1,4 @@
+import math
 from typing import Union
 
 from django.shortcuts import get_object_or_404
@@ -5,29 +6,37 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import *
 
 
-class SandwichPagination(PageNumberPagination):
-    page_size = 10
-
-
 class SandwichViewSet(viewsets.ModelViewSet):
     queryset = Sandwich.objects.all()
     serializer_class = SandwichSerializer
-    pagination_class = SandwichPagination
 
     def __init__(self):
         self.current_ingredient_name = ''
 
     @swagger_auto_schema(responses={200: openapi.Response(description='SandwichVO', schema=SandwichVOSerializer)})
     def get_sandwiches(self, request):
+        page = int(request.GET.get('page', 1))
+        default_page_size = 10
+
         sandwiches = Sandwich.objects.filter(is_deleted=False)
-        return Response(SandwichVOSerializer(sandwiches, many=True).data)
+
+        offset = (page - 1) * default_page_size
+        limit = page * default_page_size
+        total_items = len(sandwiches)
+        items = sandwiches[offset:limit]
+        paging = {
+            "current_page": page,
+            "total_page": math.ceil(total_items / default_page_size),
+            "total_items": total_items,
+        }
+
+        return Response({"paging": paging, "detail": SandwichVOSerializer(items, many=True).data})
 
     @swagger_auto_schema(responses={200: openapi.Response(description='SandwichVO', schema=SandwichVOSerializer)})
     def create_sandwich(self, request):
